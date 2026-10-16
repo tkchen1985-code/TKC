@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5efe4">
-  <title>人民幣成本換算</title>
+  <title>THIS THING｜成本與淨利試算</title>
   <style>
     :root {
       color-scheme: light;
@@ -187,153 +187,38 @@
       main { border-radius: 22px; }
       .intro { margin-bottom: 26px; }
     }
-  </style>
+  main{width:min(100%,1100px)}h1{font-size:clamp(2rem,5vw,3rem)}.layout{display:grid;grid-template-columns:1fr 1fr;gap:32px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}h2{font-size:1.1rem;margin:24px 0 0}button{padding:12px 18px;border:1px solid var(--line);border-radius:12px;background:#fffdf9;color:var(--green);font:inherit;cursor:pointer}small,.note{color:var(--muted);line-height:1.7}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:14px}.metric{background:#f2f6f1;padding:18px;border-radius:14px}.metric output{font-size:1.65rem}.metric p{margin:0;font-size:.85rem}.negative{color:#a83527}.result output{font-size:2.7rem}table{width:100%;border-collapse:collapse;margin-top:18px}td,th{padding:10px 0;border-bottom:1px solid var(--line);text-align:left}td:last-child,th:last-child{text-align:right}.note{font-size:.83rem}#errors{color:#a83527;min-height:1.5em}details{margin-top:24px;line-height:1.8}summary{cursor:pointer;font-weight:700}@media(max-width:760px){.layout{grid-template-columns:1fr}main{padding:24px}.layout{gap:8px}}@media(max-width:380px){.fields,.metrics{grid-template-columns:1fr}} </style>
 </head>
-<body>
-  <main>
-    <p class="eyebrow">COST CALCULATOR</p>
-    <h1>人民幣成本換算</h1>
-    <p class="intro">輸入成本與倍率，結果會自動算好。</p>
-
-    <form id="calculator" autocomplete="off">
-      <div class="field">
-        <label for="cost">人民幣成本</label>
-        <div class="input-wrap">
-          <input id="cost" name="cost" type="number" min="0" step="any" inputmode="decimal" placeholder="例如：100" autofocus>
-          <span class="suffix">¥</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="rate">換算倍率</label>
-        <select id="rate" name="rate">
-          <option value="13">13</option>
-          <option value="13.5">13.5</option>
-          <option value="14">14</option>
-          <option value="custom">自己輸入數值</option>
-        </select>
-      </div>
-
-      <div class="field" id="customField" hidden>
-        <label for="customRate">自訂倍率</label>
-        <div class="input-wrap">
-          <input id="customRate" name="customRate" type="number" min="0" step="any" inputmode="decimal" placeholder="輸入倍率">
-          <span class="suffix">×</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="grossMargin">成本率（人民幣匯率以 5 計算）</label>
-        <div class="input-wrap">
-          <input id="grossMargin" type="text" value="38.46" readonly aria-describedby="marginEquation">
-          <span class="suffix">%</span>
-        </div>
-        <p class="margin-equation" id="marginEquation">1 ÷（13 ÷ 5）＝ 38.46%</p>
-      </div>
-
-      <section class="result" aria-live="polite">
-        <p class="result-label">換算結果</p>
-        <output id="result">—</output>
-        <p class="equation" id="equation">請先輸入人民幣成本</p>
-      </section>
-
-      <button class="reset" id="reset" type="button">清除並重新計算</button>
-    </form>
-  </main>
-
-  <script>
-    const cost = document.querySelector("#cost");
-    const rate = document.querySelector("#rate");
-    const customRate = document.querySelector("#customRate");
-    const customField = document.querySelector("#customField");
-    const grossMargin = document.querySelector("#grossMargin");
-    const marginEquation = document.querySelector("#marginEquation");
-    const result = document.querySelector("#result");
-    const equation = document.querySelector("#equation");
-    const reset = document.querySelector("#reset");
-
-    const numberFormat = new Intl.NumberFormat("zh-TW", {
-      maximumFractionDigits: 2
-    });
-
-    function selectedRate() {
-      return rate.value === "custom"
-        ? Number.parseFloat(customRate.value)
-        : Number.parseFloat(rate.value);
-    }
-
-    function calculate() {
-      const costValue = Number.parseFloat(cost.value);
-      const rateValue = selectedRate();
-      const hasCost = Number.isFinite(costValue) && costValue >= 0;
-      const hasRate = Number.isFinite(rateValue) && rateValue > 0;
-
-      if (hasRate) {
-        const margin = 1 / (rateValue / 5);
-        const marginPercent = margin * 100;
-        grossMargin.value = numberFormat.format(marginPercent);
-        marginEquation.textContent =
-          `1 ÷（${numberFormat.format(rateValue)} ÷ 5）＝ ${numberFormat.format(marginPercent)}%`;
-      } else {
-        grossMargin.value = "—";
-        marginEquation.textContent = "請輸入大於 0 的自訂倍率";
-      }
-
-      if (!hasCost || !hasRate) {
-        result.textContent = "—";
-        equation.textContent = !hasCost
-          ? "請先輸入人民幣成本"
-          : "請輸入自訂倍率";
-      } else {
-        const total = costValue * rateValue;
-        result.textContent = numberFormat.format(total);
-        equation.textContent =
-          `${numberFormat.format(costValue)} × ${numberFormat.format(rateValue)} = ${numberFormat.format(total)}`;
-      }
-
-      localStorage.setItem("rmb-calculator", JSON.stringify({
-        cost: cost.value,
-        rate: rate.value,
-        customRate: customRate.value
-      }));
-    }
-
-    function toggleCustomRate() {
-      const isCustom = rate.value === "custom";
-      customField.hidden = !isCustom;
-      if (isCustom && !customRate.value) customRate.focus();
-      calculate();
-    }
-
-    function restore() {
-      try {
-        const saved = JSON.parse(localStorage.getItem("rmb-calculator"));
-        if (!saved) return;
-        cost.value = saved.cost ?? "";
-        rate.value = saved.rate ?? "13";
-        customRate.value = saved.customRate ?? "";
-        customField.hidden = rate.value !== "custom";
-        calculate();
-      } catch {
-        localStorage.removeItem("rmb-calculator");
-      }
-    }
-
-    cost.addEventListener("input", calculate);
-    customRate.addEventListener("input", calculate);
-    rate.addEventListener("change", toggleCustomRate);
-    reset.addEventListener("click", () => {
-      cost.value = "";
-      rate.value = "13";
-      customRate.value = "";
-      customField.hidden = true;
-      localStorage.removeItem("rmb-calculator");
-      calculate();
-      cost.focus();
-    });
-
-    restore();
-    calculate();
-  </script>
-</body>
-</html>
+<body><main><p class="eyebrow">THIS THING · BUSINESS TOOLS</p><h1>成本與淨利試算</h1><p class="intro">從人民幣進貨到實際獲利，即時掌握定價與每月損益。</p><form id="calculator" novalidate><div class="layout"><div><h2>01｜人民幣成本換算</h2><div class="fields"><div class="field"><label for="cost">人民幣單件成本</label><div class="input-wrap"><input id="cost" type="number" min="0" step="any" inputmode="decimal" value="" required><span class="suffix">¥</span></div></div><div class="field"><label for="exchange">人民幣匯率</label><div class="input-wrap"><input id="exchange" type="number" min="0" step="any" inputmode="decimal" value="5" required><span class="suffix">TWD</span></div></div><div class="field"><label for="rate">定價倍率</label><select id="rate"><option value="13">13</option><option value="13.5">13.5</option><option value="14">14</option><option value="custom">自己輸入數值</option></select></div><div class="field" id="customField" hidden><label for="customRate">自訂倍率</label><input id="customRate" type="number" min="0" step="any" inputmode="decimal"></div></div><p class="note" id="conversion">請輸入人民幣成本</p><button id="apply" type="button">將倍率換算結果套用為售價</button><h2>02｜售價與營運假設</h2><div class="fields"><div class="field"><label for="price">實際單件售價</label><div class="input-wrap"><input id="price" type="number" min="0" step="any" inputmode="decimal" value="" required><span class="suffix">元</span></div></div><div class="field"><label for="platform">平台費率</label><div class="input-wrap"><input id="platform" type="number" min="0" step="any" inputmode="decimal" value="15" required><span class="suffix">%</span></div></div><div class="field"><label for="invoice">發票費率</label><div class="input-wrap"><input id="invoice" type="number" min="0" step="any" inputmode="decimal" value="7" required><span class="suffix">%</span></div></div><div class="field"><label for="ads">廣告費率</label><div class="input-wrap"><input id="ads" type="number" min="0" step="any" inputmode="decimal" value="12" required><span class="suffix">%</span></div></div><div class="field"><label for="fixed">月固定成本</label><div class="input-wrap"><input id="fixed" type="number" min="0" step="any" inputmode="decimal" value="130000" required><span class="suffix">元</span></div></div><div class="field"><label for="revenue">預估月營業額</label><div class="input-wrap"><input id="revenue" type="number" min="0" step="any" inputmode="decimal" value="1300000" required><span class="suffix">元</span></div></div></div><p class="note">售價請填折扣後實收商品金額。三項費率皆按營業額計提；發票 7% 為內部成本假設，可依實際調整。包材已含在雜支時，請勿重複計入固定成本。</p><button id="reset" type="button">恢復預設並清除商品</button><p id="storage" class="note">設定僅記憶於此瀏覽器。</p></div><div><h2>03｜試算結果</h2><p id="errors" role="status"></p><section class="result" aria-live="polite"><p class="result-label">單件淨利估算（已分攤固定成本）</p><output id="net">—</output><p id="netnote" class="equation">請輸入成本及售價</p></section><div class="metrics" style="margin-top:18px" aria-live="polite"><div class="metric"><p>淨利率</p><output id="margin">—</output></div><div class="metric"><p>單件貢獻利潤</p><output id="contribution">—</output></div><div class="metric"><p>月損益估算</p><output id="monthly">—</output></div><div class="metric"><p>損益兩平月營業額</p><output id="breakeven">—</output></div></div><table><caption style="text-align:left;margin-top:24px;font-weight:bold">單件成本拆解（NT$）</caption><thead><tr><th scope="col">項目</th><th scope="col">金額</th></tr></thead><tbody id="breakdown"></tbody></table><p class="note">月損益假設全月商品組合與此商品的成本率、費率一致。固定成本依營業額比例分攤；未另計退貨、運費補貼及其他未輸入費用。</p><details><summary>計算公式與使用說明</summary><p>台幣成本＝人民幣成本 × 匯率<br>倍率換算售價＝人民幣成本 × 定價倍率<br>成本率＝台幣成本 ÷ 實際售價<br>貢獻利潤＝售價 ×（1 − 平台費率 − 發票費率 − 廣告費率）− 台幣成本<br>單件固定成本分攤＝售價 × 月固定成本 ÷ 月營業額<br>單件淨利＝貢獻利潤 − 固定成本分攤<br>淨利率＝單件淨利 ÷ 售價<br>月損益＝月營業額 × 貢獻利潤率 − 月固定成本<br>損益兩平月營業額＝月固定成本 ÷ 貢獻利潤率</p><p>貢獻利潤率不大於 0 時，增加銷售無法改善損益兩平。月營業額為 0 時，月損益為負固定成本，單件分攤及淨利率無法估算。</p></details></div></div></form></main><script>
+const $=id=>document.getElementById(id);
+const defaults={cost:'',exchange:'5',rate:'13',customRate:'',price:'',platform:'15',invoice:'7',ads:'12',fixed:'130000',revenue:'1300000'};
+const key='thisthing-profit-v1',fmt=new Intl.NumberFormat('zh-TW',{maximumFractionDigits:2});
+const money=n=>Number.isFinite(n)?'NT$ '+fmt.format(n):'—';
+const num=id=>$(id).value.trim()===''?NaN:Number($(id).value);
+function save(){try{localStorage.setItem(key,JSON.stringify(Object.fromEntries(Object.keys(defaults).map(id=>[id,$(id).value]))));}catch{$('storage').textContent='此瀏覽器無法儲存設定；仍可正常試算。';}}
+function render(id,n,percent=false){$(id).textContent=percent?(Number.isFinite(n)?fmt.format(n*100)+'%':'—'):money(n);$(id).classList.toggle('negative',n<0);}
+function calculate(){
+ $('customField').hidden=$('rate').value!=='custom';
+ const c=num('cost'),e=num('exchange'),r=$('rate').value==='custom'?num('customRate'):num('rate'),p=num('price'),f=num('fixed'),v=num('revenue');
+ const validCost=Number.isFinite(c)&&c>=0&&Number.isFinite(e)&&e>0;
+ const validRate=Number.isFinite(r)&&r>0;
+ $('apply').disabled=!(validCost&&validRate&&Number.isFinite(c*r)&&c*r>0);
+ $('conversion').textContent=validCost&&validRate?'台幣成本 '+money(c*e)+' ｜ 倍率換算售價 '+money(c*r)+' ｜ 倍率成本率 '+fmt.format(e/r*100)+'%':'請輸入有效成本、匯率與大於 0 的倍率';
+ const fees=['platform','invoice','ads'].map(num);
+ const valid=validCost&&Number.isFinite(p)&&p>0&&[f,v].every(n=>Number.isFinite(n)&&n>=0)&&fees.every(n=>Number.isFinite(n)&&n>=0&&n<=100)&&[c*e,c*r].every(Number.isFinite);
+ $('errors').textContent=valid?'':'請填妥成本、售價及營運欄位；匯率、售價須大於 0，費率須介於 0–100%。';
+ if(!valid){['net','margin','contribution','monthly','breakeven'].forEach(id=>render(id,NaN));$('breakdown').replaceChildren();$('netnote').textContent='請檢查左側輸入';save();return;}
+ const cost=c*e,totalRate=fees.reduce((a,b)=>a+b,0)/100,con=p*(1-totalRate)-cost,cm=con/p,allocation=v>0?p*f/v:NaN,net=con-allocation,monthly=v*cm-f;
+ render('net',net);render('margin',net/p,true);render('contribution',con);render('monthly',monthly);
+ render('breakeven',cm>0?f/cm:NaN);
+ if(cm<=0)$('breakeven').textContent='無法達成';
+ $('netnote').textContent=v===0?'月營業額為 0，無法分攤單件固定成本':'實際成本率 '+fmt.format(cost/p*100)+'% ｜ 固定成本分攤 '+money(allocation);
+ $('errors').textContent=cm<=0?'貢獻利潤不大於 0，請調整售價或成本。':(totalRate>=1?'費率合計已達 100%。':'');
+ $('breakdown').replaceChildren(...[['進貨成本',cost],['平台費',p*fees[0]/100],['發票費',p*fees[1]/100],['廣告費',p*fees[2]/100],['固定成本分攤',allocation]].map(([label,value])=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=label;const td=document.createElement('td');td.textContent=Number.isFinite(value)?fmt.format(value):'—';tr.append(th,td);return tr;}));save();
+}
+try{const saved=JSON.parse(localStorage.getItem(key));const legacy=JSON.parse(localStorage.getItem('rmb-calculator'));const state=saved||(legacy?{...defaults,cost:legacy.cost,rate:legacy.rate,customRate:legacy.customRate}:defaults);for(const id of Object.keys(defaults))$(id).value=typeof state[id]==='string'?state[id]:defaults[id];if(!['13','13.5','14','custom'].includes($('rate').value))$('rate').value='13';}catch{}
+$('calculator').addEventListener('submit',e=>e.preventDefault());
+$('calculator').addEventListener('input',calculate);$('rate').addEventListener('change',calculate);
+$('apply').addEventListener('click',()=>{$('price').value=String(num('cost')*($('rate').value==='custom'?num('customRate'):num('rate')));calculate();});
+$('reset').addEventListener('click',()=>{for(const [id,value] of Object.entries(defaults))$(id).value=value;calculate();$('cost').focus();});calculate();
+</script></body></html>
